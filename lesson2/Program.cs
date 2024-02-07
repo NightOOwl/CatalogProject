@@ -17,11 +17,11 @@ if (app.Environment.IsDevelopment())
 }
 
 Catalog catalog = new Catalog();
-catalog.Initilize();
-catalog.justCrated += Subscriber.CatalogUpdatesCheck;
+
+catalog.ProductHasBeenAdded += Subscriber.CatalogUpdatesCheck;
 
 app.MapGet("/products", GetProducts);
-app.MapGet("/products/{id}", (int id)=>GetProductById(id));
+app.MapGet("/products/{id}", GetProductById);
 app.MapPost("/products", CreateProduct);
 app.MapPut("/products", UpdateProduct);
 app.MapDelete("/products/{id}", DeleteProduct);
@@ -35,20 +35,26 @@ IResult GetProducts()
 }
 IResult GetProductById(int id)
 {
-    return Results.Ok(catalog.GetProductById(id));
+    return catalog.GetProductById(id) != null
+        ? Results.Ok(catalog.GetProductById(id))
+        : Results.NotFound();
+
 }
 
 IResult CreateProduct(Product product)
 {
     catalog.AddProduct(product);
-    return Results.Created($"/products/{product.Id}",product);
+    return Results.Created($"/products/{product.Id}", product);
 }
 IResult DeleteProduct(int id)
 {
-    return catalog.DeleteProduct(id)? Results.Ok($"Product with id: {id} has been deleted"): Results.NotFound($"Product with id: {id} not found");
+    return catalog.DeleteProduct(id)
+        ? Results.Ok($"Product with id: {id} has been deleted")
+        : Results.NotFound($"Product with id: {id} not found");
 }
 IResult UpdateProduct(int id, Product product)
 {
-    
-    return catalog.UpdateProduct(id, product)? Results.Ok($"Product with id: {id} has been changed"): Results.NotFound($"Product with id: {id} not found");
+    return product != null
+        ? Results.Ok($"Product with id: {id} has been changed")
+        : Results.NotFound($"Product with id: {id} not found");
 }
